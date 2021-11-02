@@ -4,7 +4,7 @@ import Footer from './Footer'
 import Main from './Main';
 import Card from './Card'
 import PopupWithForm from './PopupWithForm';
-import PopupWithPicture from './PopupWithPicture';
+import ImagePopup from './ImagePopup';
 import { api } from '../utils/api';
 
 function App() {
@@ -124,7 +124,7 @@ function App() {
 
             <PopupWithForm name="sure" title="Are you sure?" />
 
-            <PopupWithPicture
+            <ImagePopup
                 isOpen={isPicturePopupOpen}
                 onClose={closeAllPopups}
                 fullViewLink={selectedCard.link}

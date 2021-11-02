@@ -1,7 +1,7 @@
 import * as React from 'react'
 import cross from '../images/CloseIcon.svg';
 
-function PopupWithPicture(props) {
+function ImagePopup(props) {
  
     return (
         <div className={props.isOpen ? 'popup_active' : 'popup popup_type_picture'}>
@@ -14,4 +14,4 @@ function PopupWithPicture(props) {
     )
 }
 
-export default PopupWithPicture;
+export default ImagePopup;
