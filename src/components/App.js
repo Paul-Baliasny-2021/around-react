@@ -15,7 +15,7 @@ function App() {
     const [customAvatarLink, setCustomAvatarLink] = useState({});
     const [customUserName, setCustomUserName] = useState("");
     const [customUserJob, setCustomUserJob] = useState("");
-    const [displayCards, setDisplayCards] = useState([]);
+    const [cards, setCards] = useState([]);
     const [selectedCard, setSelectedCard] = useState({ link: "", title: "" });
 
 
@@ -27,7 +27,7 @@ function App() {
                 setCustomUserJob(res.about)
             })
             .catch(res => {
-                console.log(res.status)
+                console.log("Server returned this error message:", res)
             })
     }, [])
 
@@ -40,7 +40,10 @@ function App() {
                     cardLikes: data.likes,
                     cardId: data._id
                 }))
-                setDisplayCards(custCardData)
+                setCards(custCardData)
+            })
+            .catch(res => {
+                console.log("Server returned this error message:", res)
             })
     }, [])
 
@@ -54,7 +57,6 @@ function App() {
     };
 
     function openEditAvatarPopup() {
-
         setIsEditAvatarPopupOpen(true);
     };
 
@@ -82,7 +84,7 @@ function App() {
                 onEditProfileClick={openEditProfilePopup}
                 onAddPlaceClick={openAddPlacePopup}>
                 <div className="places">
-                    {displayCards.map((data) => {
+                    {cards.map((data) => {
                         return (
                             <Card
                                 cardLink={data.cardLink}
