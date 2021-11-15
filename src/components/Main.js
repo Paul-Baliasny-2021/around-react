@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import pen from '../images/VectorPen.svg';
 import plus from '../images/VectorPlus.svg';
 import { CurrentUserContext } from '../contexts/CurrentUserContext'
+import Card from './Card';
 
 function Main(props) {
     const currentUser = useContext(CurrentUserContext)
@@ -27,7 +28,24 @@ function Main(props) {
                     <img src={plus} alt="plus" className="profile__plus" />
                 </button>
             </section>
-            {props.children}
+        
+            <section className="places">
+                {props.cards.map((cardInfo) => (
+                    <Card
+                        cardData={cardInfo}
+                        key={cardInfo._id}
+                        link={cardInfo.link}
+                        name={cardInfo.name}
+                        likesCounter={cardInfo.likes.length}
+                        ownerId={cardInfo.ownerId}
+                        likes={cardInfo.likes}
+                        cardId={cardInfo._id}
+                        onCardClick={props.onCardClick}
+                        onCardLike={props.onCardLike}
+                        onCardDelete={props.onCardDelete}
+                    />
+                ))}
+            </section>
         </div>
     )
 }

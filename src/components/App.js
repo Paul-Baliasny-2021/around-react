@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import Header from './Header'
 import Footer from './Footer'
 import Main from './Main';
-import Card from './Card'
+// import Card from './Card'
 import ImagePopup from './ImagePopup';
-import { api } from '../utils/api';
+import api from '../utils/api';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
 import EditProfilePopup from './EditProfilePopup';
 import EditAvatarPopup from './EditAvatarPopup';
@@ -17,7 +17,7 @@ function App() {
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
     const [isPicturePopupOpen, setIsPicturePopupOpen] = useState(false);
     const [cards, setCards] = useState([]);
-    const [selectedCard, setSelectedCard] = useState({ link: "", title: "" });
+    const [selectedCard, setSelectedCard] = useState({});
     const [currentUser, setCurrentUser] = useState({});
     const [isSaving, setIsSaving] = useState(false);
 
@@ -31,6 +31,7 @@ function App() {
     useEffect(() => {
         api.getInitialCards()
             .then(res => {
+
                 const custCardData = res.map((data) => ({
                     link: data.link,
                     name: data.name,
@@ -96,6 +97,11 @@ function App() {
             });
     };
 
+    function handleCardClick(card) {
+        setSelectedCard(card);
+        openPicturePopup();
+    }
+
     function handleCardLike(card) {
         const isLiked = card.likes.some(i => i._id === currentUser._id);
         api.changeLikeCardStatus(card._id, !isLiked)
@@ -103,6 +109,13 @@ function App() {
                 setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
             })
     }
+
+    function handleCardDelete(card) {
+        api.deleteCard(card._id)
+            .then(() => {
+                setCards(cards.filter((item) => item._id !== card._id));
+            })
+    };
 
     return (
         <div className="page-container">
@@ -112,39 +125,12 @@ function App() {
                 <Main
                     onEditAvatarClick={openEditAvatarPopup}
                     onEditProfileClick={openEditProfilePopup}
-                    onAddPlaceClick={openAddPlacePopup}>
-                    <div className="places">
-                        {cards.map((data) => {
-                            return (
-                                <Card
-                                    cardData={data}
-                                    link={data.link}
-                                    name={data.name}
-                                    likesCounter={data.likes.length}
-                                    ownerId={data.ownerId}
-                                    likes={data.likes}
-                                    key={data._id}
-                                    cardId={data._id}
-                                    onCardClick={() => {
-                                        setSelectedCard({
-                                            link: data.link,
-                                            title: data.name
-                                        })
-                                        openPicturePopup()
-                                    }
-                                    }
-                                    onCardLike={handleCardLike}
-                                    onCardDelete={() =>
-                                        api.deleteCard(data._id)
-                                            .then(() => {
-                                                setCards(cards.filter((item) => item._id !== data._id));
-                                            })
-                                    }
-                                />
-                            )
-                        })}
-                    </div>
-                </Main>
+                    onAddPlaceClick={openAddPlacePopup}
+                    cards={cards}
+                    onCardClick={handleCardClick}
+                    onCardLike={handleCardLike}
+                    onCardDelete={handleCardDelete}
+                />
 
                 <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} isSaving={isSaving} />
 
@@ -152,11 +138,7 @@ function App() {
 
                 <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlaceSubmit={handleAddPlaceSubmit} isSaving={isSaving} />
 
-                <ImagePopup
-                    isOpen={isPicturePopupOpen}
-                    onClose={closeAllPopups}
-                    fullViewLink={selectedCard.link}
-                    fullViewTitle={selectedCard.title} />
+                <ImagePopup isOpen={isPicturePopupOpen} onClose={closeAllPopups} fullViewTitle={selectedCard.name} fullViewLink={selectedCard.link} />
             </CurrentUserContext.Provider>
             <Footer />
 
