@@ -3,31 +3,29 @@ import Header from './Header'
 import Footer from './Footer'
 import Main from './Main';
 import Card from './Card'
-import PopupWithForm from './PopupWithForm';
 import ImagePopup from './ImagePopup';
 import { api } from '../utils/api';
+import { CurrentUserContext } from '../contexts/CurrentUserContext';
+import EditProfilePopup from './EditProfilePopup';
+import EditAvatarPopup from './EditAvatarPopup';
+import AddPlacePopup from './AddPlacePopup';
 
 function App() {
+
     const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
     const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
     const [isPicturePopupOpen, setIsPicturePopupOpen] = useState(false);
-    const [customAvatarLink, setCustomAvatarLink] = useState({});
-    const [customUserName, setCustomUserName] = useState("");
-    const [customUserJob, setCustomUserJob] = useState("");
+  
     const [cards, setCards] = useState([]);
     const [selectedCard, setSelectedCard] = useState({ link: "", title: "" });
-
+    const [currentUser, setCurrentUser] = useState({});
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         api.getUserInfo()
-            .then(res => {
-                setCustomAvatarLink(res.avatar)
-                setCustomUserName(res.name)
-                setCustomUserJob(res.about)
-            })
-            .catch(res => {
-                console.log("Server returned this error message:", res)
+            .then(currentUser => {
+                setCurrentUser(currentUser)
             })
     }, [])
 
@@ -35,18 +33,15 @@ function App() {
         api.getInitialCards()
             .then(res => {
                 const custCardData = res.map((data) => ({
-                    cardLink: data.link,
-                    cardTitle: data.name,
-                    cardLikes: data.likes,
-                    cardId: data._id
+                    link: data.link,
+                    name: data.name,
+                    likes: data.likes,
+                    _id: data._id,
+                    ownerId: data.owner._id
                 }))
                 setCards(custCardData)
             })
-            .catch(res => {
-                console.log("Server returned this error message:", res)
-            })
     }, [])
-
 
     function openEditProfilePopup() {
         setIsEditProfilePopupOpen(true);
@@ -63,77 +58,109 @@ function App() {
     function openPicturePopup() {
         setIsPicturePopupOpen(true)
     }
-  
+
     function closeAllPopups() {
         setIsEditProfilePopupOpen(false);
         setIsAddPlacePopupOpen(false);
         setIsEditAvatarPopupOpen(false);
-        setIsPicturePopupOpen(false)
-        setSelectedCard({ link: "", title: "" });;
+        setIsPicturePopupOpen(false);
+        setSelectedCard({ link: "", title: "" });
+    }
+
+    function handleUpdateUser(userData) {
+        setIsSaving(true)
+        api.editUserInfo(userData)
+            .then(newUserData => {
+                setCurrentUser(newUserData);
+                setIsSaving(false)
+                closeAllPopups();
+            });
+    };
+
+    function handleUpdateAvatar(link) {
+        setIsSaving(true)
+        api.uploadUserAvatar(link)
+            .then(res => {
+                setCurrentUser(res);
+                setIsSaving(false);
+                closeAllPopups();
+            });
+    };
+
+    function handleAddPlaceSubmit(placeInfo) {
+        setIsSaving(true)
+        api.postNewCard(placeInfo)
+            .then(res => {
+                setCards([res, ...cards]);
+                setIsSaving(false);
+                closeAllPopups();
+            });
+    };
+
+    function handleCardLike(card) {
+        const isLiked = card.likes.some(i => i._id === currentUser._id);
+        api.changeLikeCardStatus(card._id, !isLiked)
+            .then(newCard => {
+                setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
+            })
     }
 
     return (
         <div className="page-container">
+
             <Header />
+            <CurrentUserContext.Provider value={currentUser}>
+                <Main
+                    onEditAvatarClick={openEditAvatarPopup}
+                    onEditProfileClick={openEditProfilePopup}
+                    onAddPlaceClick={openAddPlacePopup}>
+                    <div className="places">
+                        {cards.map((data) => {
+                            return (
+                                <Card
+                                    cardData={data}
+                                    link={data.link}
+                                    name={data.name}
+                                    likesCounter={data.likes.length}
+                                    ownerId={data.ownerId}
+                                    likes={data.likes}
+                                    key={data._id}
+                                    cardId={data._id}
+                                    onCardClick={() => {
+                                        setSelectedCard({
+                                            link: data.link,
+                                            title: data.name
+                                        })
+                                        openPicturePopup()
+                                    }
+                                    }
+                                    onCardLike={handleCardLike}
+                                    onCardDelete={() =>
+                                        api.deleteCard(data._id)
+                                            .then(() => {
+                                                setCards(cards.filter((item) => item._id !== data._id));
+                                            })
+                                    }
+                                />
+                            )
+                        })}
+                    </div>
+                </Main>
 
-            <Main
-                userAvatar={customAvatarLink}
-                userName={customUserName}
-                userDescription={customUserJob}
-                onEditAvatarClick={openEditAvatarPopup}
-                onEditProfileClick={openEditProfilePopup}
-                onAddPlaceClick={openAddPlacePopup}>
-                <div className="places">
-                    {cards.map((data) => {
-                        return (
-                            <Card
-                                cardLink={data.cardLink}
-                                cardTitle={data.cardTitle}
-                                cardLikes={data.cardLikes.length}
-                                key={data.cardId}
-                                onCardClick={() => {
-                                    setSelectedCard({
-                                        link: data.cardLink,
-                                        title: data.cardTitle
-                                    })
-                                    openPicturePopup()
-                                }
-                                }
-                            />
-                        )
-                    })}
-                </div>
-            </Main>
+                <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} isSaving={isSaving} />
 
-            <PopupWithForm name="edit" title="Edit profile" isOpen={isEditProfilePopupOpen} onClose={closeAllPopups}>
-                <input id="name-input" className="popup__input popup__input_text_name" type="text" name="name" placeholder="Jacques Cousteau" minLength="2" maxLength="40" required />
-                <span id="name-input-error" className="popup__error-message"></span>
-                <input id="profession-input" className="popup__input popup__input_text_profession" type="text" name="profession" placeholder="Explorer" minLength="2" maxLength="200" required />
-                <span id="profession-input-error" className="popup__error-message"></span>
-            </PopupWithForm>
+                <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} isSaving={isSaving} />
 
-            <PopupWithForm name="add" title="New place" isOpen={isAddPlacePopupOpen} onClose={closeAllPopups}>
-                <input id="toponym-input" className="popup__input popup__input_text_toponym" type="text" name="name" placeholder="Title" minLength="1" maxLength="30" required />
-                <span id="toponym-input-error" className="popup__error-message"></span>
-                <input id="url-input" className="popup__input popup__input_text_link" type="url" name="link" placeholder="Image URL" required />
-                <span id="url-input-error" className="popup__error-message"></span>
-            </PopupWithForm>
+                <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlaceSubmit={handleAddPlaceSubmit} isSaving={isSaving} />
 
-            <PopupWithForm name="avatar" title="Change profile picture" isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups}>
-                <input id="image-url-input" className="popup__input popup__input_text_link" type="url" name="avatar" placeholder="https://somewebsite.com/someimage.jpg" required />
-                <span id="image-url-input-error" className="popup__error-message"></span>
-            </PopupWithForm>
+                <ImagePopup
+                    isOpen={isPicturePopupOpen}
+                    onClose={closeAllPopups}
+                    fullViewLink={selectedCard.link}
+                    fullViewTitle={selectedCard.title} />
 
-            <PopupWithForm name="sure" title="Are you sure?" />
-
-            <ImagePopup
-                isOpen={isPicturePopupOpen}
-                onClose={closeAllPopups}
-                fullViewLink={selectedCard.link}
-                fullViewTitle={selectedCard.title} />
-                
-            <Footer />
-
+                <Footer />
+            </CurrentUserContext.Provider>
         </div>
     );
 }
