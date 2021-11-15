@@ -16,7 +16,6 @@ function App() {
     const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
     const [isPicturePopupOpen, setIsPicturePopupOpen] = useState(false);
-  
     const [cards, setCards] = useState([]);
     const [selectedCard, setSelectedCard] = useState({ link: "", title: "" });
     const [currentUser, setCurrentUser] = useState({});
@@ -27,7 +26,7 @@ function App() {
             .then(currentUser => {
                 setCurrentUser(currentUser)
             })
-    }, [])
+    }, []);
 
     useEffect(() => {
         api.getInitialCards()
@@ -41,7 +40,7 @@ function App() {
                 }))
                 setCards(custCardData)
             })
-    }, [])
+    }, []);
 
     function openEditProfilePopup() {
         setIsEditProfilePopupOpen(true);
@@ -57,7 +56,7 @@ function App() {
 
     function openPicturePopup() {
         setIsPicturePopupOpen(true)
-    }
+    };
 
     function closeAllPopups() {
         setIsEditProfilePopupOpen(false);
@@ -65,7 +64,7 @@ function App() {
         setIsEditAvatarPopupOpen(false);
         setIsPicturePopupOpen(false);
         setSelectedCard({ link: "", title: "" });
-    }
+    };
 
     function handleUpdateUser(userData) {
         setIsSaving(true)
@@ -158,11 +157,11 @@ function App() {
                     onClose={closeAllPopups}
                     fullViewLink={selectedCard.link}
                     fullViewTitle={selectedCard.title} />
-
-                <Footer />
             </CurrentUserContext.Provider>
+            <Footer />
+
         </div>
     );
-}
+};
 
 export default App;
