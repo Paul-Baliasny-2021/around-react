@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import Header from './Header'
 import Footer from './Footer'
 import Main from './Main';
-// import Card from './Card'
 import ImagePopup from './ImagePopup';
 import api from '../utils/api';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
@@ -26,20 +25,18 @@ function App() {
             .then(currentUser => {
                 setCurrentUser(currentUser)
             })
+            .catch(err => {
+                console.log("Server returned this error:", err)
+            })
     }, []);
 
     useEffect(() => {
         api.getInitialCards()
-            .then(res => {
-
-                const custCardData = res.map((data) => ({
-                    link: data.link,
-                    name: data.name,
-                    likes: data.likes,
-                    _id: data._id,
-                    ownerId: data.owner._id
-                }))
+            .then(custCardData => {
                 setCards(custCardData)
+            })
+            .catch(err => {
+                console.log(`Server returned this error: ${err.status}`)
             })
     }, []);
 
@@ -64,7 +61,7 @@ function App() {
         setIsAddPlacePopupOpen(false);
         setIsEditAvatarPopupOpen(false);
         setIsPicturePopupOpen(false);
-        setSelectedCard({ link: "", title: "" });
+        setSelectedCard({});
     };
 
     function handleUpdateUser(userData) {
@@ -72,9 +69,12 @@ function App() {
         api.editUserInfo(userData)
             .then(newUserData => {
                 setCurrentUser(newUserData);
-                setIsSaving(false)
                 closeAllPopups();
-            });
+            })
+            .catch(err => {
+                console.log("Server returned this error:", err)
+            })
+            .finally(() => { setIsSaving(false) });
     };
 
     function handleUpdateAvatar(link) {
@@ -82,9 +82,12 @@ function App() {
         api.uploadUserAvatar(link)
             .then(res => {
                 setCurrentUser(res);
-                setIsSaving(false);
                 closeAllPopups();
-            });
+            })
+            .catch(err => {
+                console.log("Server returned this error:", err)
+            })
+            .finally(() => { setIsSaving(false) });
     };
 
     function handleAddPlaceSubmit(placeInfo) {
@@ -92,9 +95,12 @@ function App() {
         api.postNewCard(placeInfo)
             .then(res => {
                 setCards([res, ...cards]);
-                setIsSaving(false);
                 closeAllPopups();
-            });
+            })
+            .catch(err => {
+                console.log("Server returned this error:", err)
+            })
+            .finally(() => { setIsSaving(false) });
     };
 
     function handleCardClick(card) {
@@ -108,12 +114,18 @@ function App() {
             .then(newCard => {
                 setCards((state) => state.map((c) => c._id === card._id ? newCard : c));
             })
+            .catch(err => {
+                console.log("Server returned this error:", err)
+            });
     }
 
     function handleCardDelete(card) {
         api.deleteCard(card._id)
             .then(() => {
                 setCards(cards.filter((item) => item._id !== card._id));
+            })
+            .catch(err => {
+                console.log("Server returned this error:", err)
             })
     };
 

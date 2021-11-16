@@ -1,7 +1,7 @@
 const createFetchTemplate = (url, headers) =>
     fetch(url, headers)
-        .then(res => res.ok ? res.json() : Promise.reject(`Server returned this error: ${res.status}`))
-        .catch(err => console.log(err));
+        .then(res => res.ok ? res.json() : Promise.reject(res.status));
+        // .catch(err => console.log(err));
 
 class Api {
     constructor({ baseUrl, headers }) {
